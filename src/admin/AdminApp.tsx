@@ -316,7 +316,7 @@ function Login({
                 type="password"
                 autoComplete={reset ? "new-password" : "current-password"}
                 required
-                minLength={reset ? 12 : 1}
+                minLength={reset ? 8 : 1}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -327,7 +327,7 @@ function Login({
               <input
                 type="password"
                 required
-                minLength={12}
+                minLength={8}
                 autoComplete="new-password"
                 value={repeat}
                 onChange={(e) => setRepeat(e.target.value)}
