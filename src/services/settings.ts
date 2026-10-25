@@ -1,5 +1,6 @@
 import { db, check } from "../lib/supabase";
 export const publicFields = [
+  {key:'whatsapp_number',label:'WhatsApp comercial (país + DDD + número, somente dígitos)',fallback:'',max:15},
   {
     key: "footer_description",
     label: "Descrição no rodapé",
@@ -21,7 +22,7 @@ export async function getPublicSettings() {
 }
 export async function savePublicSetting(key: string, value: string) {
   const field = publicFields.find((f) => f.key === key);
-  if (!field || !value.trim() || value.length > field.max)
+  if (!field || (key!=='whatsapp_number' && !value.trim()) || value.length > field.max || (key==='whatsapp_number' && value!=='' && !/^[1-9][0-9]{7,14}$/.test(value)))
     throw new Error("Configuração inválida.");
   const { error } = await db()
     .from("site_settings")

@@ -16,6 +16,7 @@ import { Products } from "./Products";
 import { ProductEditor } from "./ProductEditor";
 import { Categories } from "./Categories";
 import { Settings } from "./Settings";
+import {Leads,LeadDetail} from './Leads';
 import { Field, Loading, Notice } from "./shared";
 import "./admin.css";
 export default function AdminApp() {
@@ -177,6 +178,7 @@ export default function AdminApp() {
             ["/admin", "Visão geral"],
             ["/admin/produtos", "Produtos"],
             ["/admin/categorias", "Categorias"],
+            ["/admin/leads", "Interessados"],
             ["/admin/configuracoes", "Configurações"],
           ].map(([href, label]) => (
             <Link
@@ -225,6 +227,10 @@ export default function AdminApp() {
             <Categories />
           ) : path === "/admin/configuracoes" ? (
             <Settings />
+          ) : path === '/admin/leads' ? (
+            <Leads />
+          ) : path.startsWith('/admin/leads/') ? (
+            <LeadDetail key={path} id={path.split('/')[3]} />
           ) : (
             <>
               <h1>Página não encontrada</h1>

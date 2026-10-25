@@ -26,7 +26,7 @@ export interface DemoProduct {
   installation: boolean;
   compatibility: { requiresConfirmation: true; notes: string };
   type: "produto" | "servico";
-  demonstration: true;
+  demonstration: boolean;
 }
 
 const seeds: [

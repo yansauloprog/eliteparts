@@ -13,7 +13,7 @@ import {
   decodeSlug,
 } from "./lib/router";
 import { useReveal } from "./hooks/useReveal";
-import { CheckoutPage } from "./pages/CheckoutPage";
+import { InterestPage, PrivacyPage } from "./pages/InterestPage";
 import { CreditsPage } from "./pages/CreditsPage";
 export function App() {
   const route = useRoute();
@@ -42,7 +42,9 @@ export function App() {
       ) : path.startsWith("/produto/") ? (
         <ProductPage key={path} slug={decodeSlug(path.slice(9))} />
       ) : path === "/checkout" || path.startsWith("/checkout/") ? (
-        <CheckoutPage segment={path.split("/")[2] || "identificacao"} />
+        <InterestPage />
+      ) : path === '/privacidade' ? (
+        <PrivacyPage />
       ) : path === "/creditos" ? (
         <CreditsPage />
       ) : (

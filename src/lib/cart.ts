@@ -1,4 +1,3 @@
-import { demoCatalog } from "../data/demo-catalog";
 export interface CartChoice {
   option: string;
   installation: boolean;
@@ -32,7 +31,7 @@ export function decodeCart(raw: string | null): CartLine[] {
     if (value?.version !== 1 || !Array.isArray(value.items)) return [];
     const result: CartLine[] = [];
     for (const v of value.items.slice(0, 100)) {
-      const p = demoCatalog.find((p) => p.id === v?.productId);
+      const p = typeof v?.productId === 'string' && /^[0-9a-f-]{36}$/i.test(v.productId) ? {id:v.productId,installation:false,type:'produto'} : null;
       if (!p || typeof v.quantity !== "number") continue;
       const choice: CartChoice = {
         option: clean(v.option),

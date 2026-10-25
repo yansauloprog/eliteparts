@@ -83,13 +83,13 @@ export function ProductGallery({ product: p }: { product: DemoProduct }) {
             aria-pressed={active === i}
             onClick={() => setActive(i)}
           >
-            <ProductImage image={image} name={p.name} eager />
+            <ProductImage image={image ? {...image,src:image.thumbnail||image.src,thumbnail:undefined} : undefined} name={p.name} />
           </button>
         ))}
       </div>
       <p className="shop-image-note">
         {p.images.length
-          ? `${active + 1} / ${p.images.length} · Imagem ilustrativa`
+          ? `${active + 1} / ${p.images.length}`
           : "Fotografia a definir"}
       </p>
       {open ? (

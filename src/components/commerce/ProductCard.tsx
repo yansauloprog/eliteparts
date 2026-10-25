@@ -6,6 +6,7 @@ import { useCommerce } from "../../hooks/useCommerce";
 import { FavoriteButton } from "./FavoriteButton";
 import { ProductImage } from "./ProductImage";
 import { Icon } from "./Icon";
+import type {CatalogProduct} from '../../services/catalog';
 export function ProductCard({ product: p }: { product: DemoProduct }) {
   const { setQuickView } = useCommerce();
   const price = effectivePrice(p);
@@ -37,16 +38,16 @@ export function ProductCard({ product: p }: { product: DemoProduct }) {
         </button>
       </div>
       <div className="shop-card-body">
-        <span className="shop-category-label">{categoryName(p.category)}</span>
+        <span className="shop-category-label">{(p as CatalogProduct).categoryLabel || categoryName(p.category)}</span>
         <Link href={`/produto/${p.slug}`}>
           <h3>{p.name}</h3>
         </Link>
         <p className="shop-card-price">
-          {price === null ? "Consultar valor" : currency(price)}
+          {price === null ? "Preço sob consulta" : currency(price)}
         </p>
         <div className="shop-card-bottom">
           <span>
-            {p.type === "servico"
+            {(p as CatalogProduct).sku ? `Código: ${(p as CatalogProduct).sku} · ${(p as CatalogProduct).availability === 'indisponivel'?'Indisponível':'Consulte a disponibilidade'}` : p.type === "servico"
               ? "Serviço de instalação"
               : p.installation
                 ? "Instalação sob consulta"

@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/database.test.mjs && node tests/services.test.mjs",
+    "test": "node tests/database.test.mjs && node tests/services.test.mjs && node tests/work-c.test.mjs",
     "test:live": "node tests/live-api.mjs"
   },
   "dependencies": {

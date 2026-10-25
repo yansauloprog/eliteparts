@@ -47,7 +47,7 @@ export function ServicesShowcase() {
             <Link
               className="service-row"
               key={name}
-              href={`/produto/${slug}`}
+              href={`/catalogo?busca=${encodeURIComponent(name)}`}
               aria-label={`Conhecer ${name}`}
             >
               <h3>{name}</h3>
@@ -59,7 +59,7 @@ export function ServicesShowcase() {
             <button
               className="service-row"
               key={name}
-              onClick={() => setQuote(name)}
+              onClick={() => { location.href='/catalogo?busca='+encodeURIComponent(name); }}
               aria-label={`Consultar ${name}`}
             >
               <h3>{name}</h3>
@@ -148,6 +148,7 @@ export function StoreFooter() {
           <Link href="/#visite">Contato</Link>
           <Link href="/#inicio">Início ↑</Link>
           <Link href="/creditos">Créditos das imagens</Link>
+          <Link href="/privacidade">Aviso de privacidade</Link>
         </nav>
         <div>
           <strong>NOS ENCONTRE</strong>
@@ -161,7 +162,7 @@ export function StoreFooter() {
       </div>
       <div className="shop-footer-bottom">
         <span>© {new Date().getFullYear()} Elite Parts.</span>
-        <span>Experiência demonstrativa.</span>
+        <span>Catálogo · Orçamento com atendimento personalizado.</span>
       </div>
     </footer>
   );

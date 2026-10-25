@@ -1,6 +1,7 @@
 import { dashboard } from "../services/products";
 import { Link } from "../lib/router";
 import { useLoad, Loading, LoadError } from "./shared";
+import {CrmDashboard} from './Leads';
 export function Dashboard() {
   const { data, error, loading, reload } = useLoad(dashboard);
   if (loading) return <Loading />;
@@ -41,6 +42,7 @@ export function Dashboard() {
           <Link href="/admin/produtos/novo">Cadastrar primeiro produto →</Link>
         </section>
       )}
+      <CrmDashboard />
       <section className="a-panel">
         <h2>Operações rápidas</h2>
         <div className="a-quick">

@@ -72,7 +72,7 @@ export function Settings() {
           {publicFields.map((f) => (
             <Field key={f.key} label={f.label}>
               <input
-                required
+                required={f.key!=='whatsapp_number'}
                 maxLength={f.max}
                 value={values[f.key] ?? ""}
                 onChange={(e) =>

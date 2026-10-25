@@ -10,3 +10,4 @@ import "./layout-fullwidth.css";
 createRoot(document.getElementById("root")!).render(<App />);
 
 import "./hero-phase1.css";
+import './work-c.css';

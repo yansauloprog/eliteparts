@@ -1,193 +1,206 @@
-import { useState } from "react";
-import { categories } from "../../data/categories";
-import { useCatalogFilters } from "../../hooks/useCatalogFilters";
-import { Link } from "../../lib/router";
+import { useEffect, useState } from "react";
+import { catalog, publicCategories } from "../../services/catalog";
+import { useLoad, Loading, LoadError } from "../../admin/shared";
+import { navigate, useRoute, routeURL } from "../../lib/router";
+import { useCommerce } from "../../hooks/useCommerce";
 import { ProductCard } from "./ProductCard";
 import { CommerceHeader } from "./CommerceHeader";
 import { Modal } from "./Modal";
-import { Icon } from "./Icon";
-import { CatalogNotice } from "./CatalogNotice";
 export function CatalogView({ home = false }: { home?: boolean }) {
-  const f = useCatalogFilters();
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const route = useRoute(),
+    params = routeURL(route).searchParams,
+    c = useCommerce();
+  const [mobile, setMobile] = useState(false),
+    [query, setQuery] = useState(params.get("busca") || "");
+  const set = (key: string, value: string) => {
+    const p = new URLSearchParams(params);
+    value ? p.set(key, value) : p.delete(key);
+    if (key !== "pagina") p.delete("pagina");
+    navigate(
+      `${home ? "/" : "/catalogo"}?${p}${home ? "#produtos" : ""}`,
+      true,
+    );
+  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (query !== (params.get("busca") || "")) set("busca", query);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [query]);
+  useEffect(() => setQuery(params.get("busca") || ""), [route]);
+  const page = Math.max(1, Number(params.get("pagina")) || 1);
+  const result = useLoad(
+    () =>
+      catalog({
+        query: params.get("busca") || "",
+        category: params.get("categoria") || "",
+        brand: params.get("marca") || "",
+        availability: params.get("disponibilidade") || "",
+        min: params.get("min") || "",
+        max: params.get("max") || "",
+        sort: params.get("ordem") || "",
+        page,
+        ...(params.has("favoritos") ? { ids: c.favorites } : {}),
+      }),
+    [route, c.favorites.join(",")],
+  );
+  const cats = useLoad(publicCategories);
   const controls = (
     <>
-      <p className="shop-small-heading">CATEGORIAS</p>
-      <div className="shop-category-list">
-        {[{ id: "", name: "Todas as categorias" }, ...categories].map((c) => (
-          <button
-            key={c.id}
-            aria-pressed={f.category === c.id}
-            onClick={() => f.setCategory(c.id)}
-          >
-            {c.name}
-            <span aria-hidden="true">↗</span>
-          </button>
+      <h3>Categorias</h3>
+      <select
+        aria-label="Categoria"
+        value={params.get("categoria") || ""}
+        onChange={(e) => set("categoria", e.target.value)}
+      >
+        <option value="">Todas as categorias</option>
+        {cats.data?.map((x) => (
+          <option key={x.id} value={x.id}>
+            {x.parent_id ? "↳ " : ""}
+            {x.name}
+          </option>
         ))}
-      </div>
-      <fieldset className="shop-type-filter">
-        <legend>O que procura?</legend>
-        {[
-          ["", "Produtos e serviços"],
-          ["produto", "Produtos"],
-          ["servico", "Serviços de instalação"],
-        ].map(([value, label]) => (
-          <label key={value}>
-            <input
-              type="radio"
-              name={filtersOpen ? "drawer-type" : "catalog-type"}
-              checked={f.type === value}
-              onChange={() => f.setType(value)}
-            />
-            {label}
-          </label>
-        ))}
-      </fieldset>
-      <button className="shop-text-link" onClick={f.reset}>
+      </select>
+      <label>
+        Marca
+        <input
+          value={params.get("marca") || ""}
+          onChange={(e) => set("marca", e.target.value)}
+        />
+      </label>
+      <label>
+        Disponibilidade
+        <select
+          value={params.get("disponibilidade") || ""}
+          onChange={(e) => set("disponibilidade", e.target.value)}
+        >
+          <option value="">Todas</option>
+          <option value="disponivel">Disponível</option>
+          <option value="sob_consulta">Sob consulta</option>
+          <option value="indisponivel">Indisponível</option>
+        </select>
+      </label>
+      {["min", "max"].map((k) => (
+        <label key={k}>
+          {k === "min" ? "Preço mínimo" : "Preço máximo"}
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={params.get(k) || ""}
+            onChange={(e) => set(k, e.target.value)}
+          />
+        </label>
+      ))}
+      <button onClick={() => navigate(home ? "/#produtos" : "/catalogo", true)}>
         Limpar filtros
       </button>
+      {cats.error && (
+        <p role="alert">Não foi possível carregar as categorias.</p>
+      )}
     </>
   );
   return (
     <section
       className="commerce"
       id={home ? "produtos" : undefined}
-      aria-label="Catálogo de produtos demonstrativos"
+      aria-label="Catálogo"
     >
       <CommerceHeader
-        query={f.query}
-        onQuery={f.setQuery}
-        onFilters={() => setFiltersOpen(true)}
         standalone={!home}
+        query={query}
+        onQuery={setQuery}
+        onFilters={() => setMobile(true)}
       />
-      <CatalogNotice />
-      <nav className="shop-category-strip" aria-label="Atalhos de categorias">
-        {categories.map((c) => (
-          <button
-            key={c.id}
-            aria-pressed={f.category === c.id}
-            onClick={() => f.setCategory(c.id)}
-          >
-            {c.short}
-          </button>
-        ))}
-      </nav>
       <div className="shop-catalog-layout">
-        <aside className="shop-sidebar" aria-label="Filtros do catálogo">
-          {controls}
-          <div className="shop-sidebar-note">
-            <p>
-              Seu projeto.
-              <br />
-              <em>Do seu jeito.</em>
-            </p>
-            <Link href="/#visite">
-              Visite a Elite Parts <Icon name="arrow" />
-            </Link>
-          </div>
-        </aside>
+        <aside className="shop-sidebar c-filters">{controls}</aside>
         <div className="shop-results">
-          <button
-            className="shop-mobile-filter"
-            aria-label="Filtros"
-            onClick={() => setFiltersOpen(true)}
-          >
-            <Icon name="filter" /> FILTRAR
-          </button>
           <div className="shop-results-heading">
             <div>
-              <p className="shop-category-label">
-                {f.favoriteOnly ? "SUA SELEÇÃO" : "PRODUTOS & SOLUÇÕES"}
-              </p>
+              <p className="shop-category-label">PRODUTOS & SOLUÇÕES</p>
               {home ? (
                 <h2>
                   Seu próximo <em>upgrade.</em>
                 </h2>
               ) : (
-                <h1 data-page-title tabIndex={-1}>
-                  {f.favoriteOnly ? (
-                    "Seus favoritos."
-                  ) : (
-                    <>
-                      Encontre seu <em>próximo upgrade.</em>
-                    </>
-                  )}
-                </h1>
+                <h1>Catálogo Elite Parts</h1>
               )}
             </div>
-            <label className="shop-sort">
-              Ordenar por
+            <label>
+              Ordenar
               <select
-                value={f.sort}
-                onChange={(e) => f.setSort(e.target.value)}
+                value={params.get("ordem") || ""}
+                onChange={(e) => set("ordem", e.target.value)}
               >
-                <option value="curadoria">Seleção do catálogo</option>
-                <option value="nome">Nome: A–Z</option>
-                <option value="nome-desc">Nome: Z–A</option>
+                {[
+                  ["", "Mais recentes"],
+                  ["nome", "Nome A–Z"],
+                  ["nome-desc", "Nome Z–A"],
+                  ["preco", "Menor preço"],
+                  ["preco-desc", "Maior preço"],
+                ].map(([v, l]) => (
+                  <option key={v} value={v}>
+                    {l}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
-          <p className="shop-result-count" role="status">
-            {f.products.length}{" "}
-            {f.products.length === 1 ? "resultado" : "resultados"}
-            {f.query ? ` para “${f.query}”` : ""}
-          </p>
-          {f.products.length ? (
-            <div className="shop-product-grid">
-              {f.products.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
+          <button
+            className="shop-mobile-filter"
+            onClick={() => setMobile(true)}
+          >
+            Filtros
+          </button>
+          {result.loading ? (
+            <Loading />
+          ) : result.error ? (
+            <LoadError error={result.error} retry={result.reload} />
           ) : (
-            <div className="shop-empty">
-              <Icon name={f.favoriteOnly ? "heart" : "search"} />
-              <h3>
-                {f.favoriteOnly
-                  ? "Sua seleção começa por um favorito."
-                  : "Vamos encontrar outro caminho."}
-              </h3>
-              <p>
-                {f.favoriteOnly
-                  ? "Toque no coração dos itens que deseja guardar."
-                  : "Tente um termo mais curto ou escolha outra categoria."}
-              </p>
-              {f.favoriteOnly ? (
-                <Link href="/catalogo" className="shop-primary">
-                  Explorar catálogo
-                </Link>
-              ) : (
-                <button className="shop-primary" onClick={f.reset}>
-                  Limpar busca e filtros
-                </button>
+            <>
+              <p>{result.data?.total} produtos</p>
+              <div className="shop-product-grid">
+                {result.data?.rows.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+              {!result.data?.total && (
+                <div className="shop-empty">
+                  <h3>
+                    {params.size
+                      ? "Nenhum resultado encontrado."
+                      : "Nosso catálogo está sendo preparado."}
+                  </h3>
+                  <p>
+                    Em breve, novidades por aqui. Você também pode visitar a
+                    loja.
+                  </p>
+                </div>
               )}
-            </div>
+              <nav className="c-pagination" aria-label="Paginação">
+                <button
+                  disabled={page === 1}
+                  onClick={() => set("pagina", String(page - 1))}
+                >
+                  Anterior
+                </button>
+                <span>Página {page}</span>
+                <button
+                  disabled={page * 24 >= (result.data?.total || 0)}
+                  onClick={() => set("pagina", String(page + 1))}
+                >
+                  Próxima
+                </button>
+              </nav>
+            </>
           )}
-          {home ? (
-            <div className="shop-catalog-bottom">
-              <Link href="/catalogo" className="shop-text-link">
-                Abrir catálogo completo <Icon name="arrow" />
-              </Link>
-            </div>
-          ) : null}
         </div>
       </div>
-      {filtersOpen ? (
-        <Modal
-          title="Filtrar catálogo"
-          onClose={() => setFiltersOpen(false)}
-          drawer
-        >
-          <div className="shop-filter-controls">
-            {controls}
-            <button
-              className="shop-primary"
-              onClick={() => setFiltersOpen(false)}
-            >
-              Ver {f.products.length} resultados
-            </button>
-          </div>
+      {mobile && (
+        <Modal title="Filtrar catálogo" onClose={() => setMobile(false)}>
+          <div className="c-filters">{controls}</div>
         </Modal>
-      ) : null}
+      )}
     </section>
   );
 }

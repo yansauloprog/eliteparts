@@ -10,7 +10,7 @@ import {
   type CheckoutDraft,
   type DemoOrder,
 } from "../lib/checkout";
-import { demoCatalog, type DemoProduct } from "../data/demo-catalog";
+import type { DemoProduct } from "../data/demo-catalog";
 import {
   clampQuantity,
   decodeCart,
@@ -19,7 +19,7 @@ import {
   type CartLine,
   emptyChoice,
 } from "../lib/cart";
-const CART_KEY = "elite-parts.demo-cart.v1",
+const CART_KEY = "elite-parts.interests.v1",
   FAV_KEY = "elite-parts.favorites.v1";
 function loadFavorites() {
   try {
@@ -27,7 +27,7 @@ function loadFavorites() {
     return Array.isArray(v)
       ? ([
           ...new Set(
-            v.filter((id: unknown) => demoCatalog.some((p) => p.id === id)),
+            v.filter((id: unknown) => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id)).slice(0,100),
           ),
         ] as string[])
       : [];
@@ -91,6 +91,7 @@ function useValue() {
     const key = lineKey(p.id, safe);
     setCart((prev) => {
       const line = prev.find((l) => l.key === key);
+      if(!line && prev.length>=50) return prev;
       return line
         ? prev.map((l) =>
             l.key === key
@@ -113,7 +114,7 @@ function useValue() {
             },
           ];
     });
-    setToast("Produto adicionado ao carrinho");
+    setToast("Produto adicionado à lista de interesses");
   };
   const updateQuantity = (key: string, n: number) =>
     setCart((prev) =>
@@ -121,11 +122,7 @@ function useValue() {
         l.key === key
           ? {
               ...l,
-              quantity:
-                demoCatalog.find((p) => p.id === l.productId)?.type ===
-                "servico"
-                  ? 1
-                  : clampQuantity(n),
+              quantity: clampQuantity(n),
             }
           : l,
       ),
