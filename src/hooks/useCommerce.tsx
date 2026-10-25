@@ -1,0 +1,171 @@
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
+import {
+  emptyCheckout,
+  type CheckoutDraft,
+  type DemoOrder,
+} from "../lib/checkout";
+import { demoCatalog, type DemoProduct } from "../data/demo-catalog";
+import {
+  clampQuantity,
+  decodeCart,
+  lineKey,
+  type CartChoice,
+  type CartLine,
+  emptyChoice,
+} from "../lib/cart";
+const CART_KEY = "elite-parts.demo-cart.v1",
+  FAV_KEY = "elite-parts.favorites.v1";
+function loadFavorites() {
+  try {
+    const v = JSON.parse(localStorage.getItem(FAV_KEY) ?? "[]");
+    return Array.isArray(v)
+      ? ([
+          ...new Set(
+            v.filter((id: unknown) => demoCatalog.some((p) => p.id === id)),
+          ),
+        ] as string[])
+      : [];
+  } catch {
+    return [];
+  }
+}
+function loadCart() {
+  try {
+    return decodeCart(localStorage.getItem(CART_KEY));
+  } catch {
+    return [];
+  }
+}
+function useValue() {
+  const [cart, setCart] = useState<CartLine[]>(loadCart),
+    [favorites, setFavorites] = useState<string[]>(loadFavorites);
+  const [checkout, setCheckout] = useState<CheckoutDraft>(emptyCheckout);
+  const [order, setOrder] = useState<DemoOrder | null>(null);
+  const [cartOpen, setCartOpen] = useState(false),
+    [quickView, setQuickView] = useState<DemoProduct | null>(null),
+    [quote, setQuote] = useState<string | null>(null),
+    [toast, setToast] = useState("");
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        CART_KEY,
+        JSON.stringify({ version: 1, items: cart }),
+      );
+    } catch {}
+  }, [cart]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
+    } catch {}
+  }, [favorites]);
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(""), 2800);
+    return () => clearTimeout(timer);
+  }, [toast]);
+  const toggleFavorite = (p: DemoProduct) => {
+    setFavorites((prev) =>
+      prev.includes(p.id) ? prev.filter((id) => id !== p.id) : [...prev, p.id],
+    );
+    setToast(
+      favorites.includes(p.id)
+        ? "Removido dos favoritos"
+        : "Salvo nos favoritos",
+    );
+  };
+  const add = (
+    p: DemoProduct,
+    quantity = 1,
+    choice: CartChoice = emptyChoice,
+  ) => {
+    const safe = {
+      ...choice,
+      installation: p.installation && choice.installation,
+    };
+    const key = lineKey(p.id, safe);
+    setCart((prev) => {
+      const line = prev.find((l) => l.key === key);
+      return line
+        ? prev.map((l) =>
+            l.key === key
+              ? {
+                  ...l,
+                  quantity:
+                    p.type === "servico"
+                      ? 1
+                      : clampQuantity(l.quantity + quantity),
+                }
+              : l,
+          )
+        : [
+            ...prev,
+            {
+              ...safe,
+              key,
+              productId: p.id,
+              quantity: p.type === "servico" ? 1 : clampQuantity(quantity),
+            },
+          ];
+    });
+    setToast("Produto adicionado ao carrinho");
+  };
+  const updateQuantity = (key: string, n: number) =>
+    setCart((prev) =>
+      prev.map((l) =>
+        l.key === key
+          ? {
+              ...l,
+              quantity:
+                demoCatalog.find((p) => p.id === l.productId)?.type ===
+                "servico"
+                  ? 1
+                  : clampQuantity(n),
+            }
+          : l,
+      ),
+    );
+  const remove = (key: string) =>
+    setCart((prev) => prev.filter((l) => l.key !== key));
+  return {
+    cart,
+    checkout,
+    setCheckout,
+    order,
+    setOrder,
+    clearCart: () => setCart([]),
+    favorites,
+    cartOpen,
+    setCartOpen,
+    quickView,
+    setQuickView,
+    quote,
+    setQuote,
+    toast,
+    setToast,
+    toggleFavorite,
+    add,
+    updateQuantity,
+    remove,
+    count: cart.reduce((s, l) => s + l.quantity, 0),
+  };
+}
+const CommerceContext = createContext<ReturnType<typeof useValue> | null>(null);
+export function CommerceProvider({ children }: { children: ReactNode }) {
+  const value = useValue();
+  return (
+    <CommerceContext.Provider value={value}>
+      {children}
+    </CommerceContext.Provider>
+  );
+}
+export function useCommerce() {
+  const v = useContext(CommerceContext);
+  if (!v) throw Error("CommerceProvider ausente");
+  return v;
+}

@@ -1,0 +1,61 @@
+import { lazy, Suspense, useEffect } from "react";
+const AdminApp = lazy(() => import("./admin/AdminApp"));
+import { Hero } from "./components/Hero";
+import { CatalogPage } from "./pages/CatalogPage";
+import { ProductPage } from "./pages/ProductPage";
+import { CommerceProvider } from "./hooks/useCommerce";
+import { CommerceOverlays } from "./components/commerce/CommerceOverlays";
+import {
+  useRoute,
+  RouteScroll,
+  Link,
+  routeURL,
+  decodeSlug,
+} from "./lib/router";
+import { useReveal } from "./hooks/useReveal";
+import { CheckoutPage } from "./pages/CheckoutPage";
+import { CreditsPage } from "./pages/CreditsPage";
+export function App() {
+  const route = useRoute();
+  useReveal(route);
+  const path = routeURL(route).pathname;
+  useEffect(() => {
+    if (!path.startsWith("/produto/") && !path.startsWith("/checkout"))
+      document.title =
+        path === "/catalogo"
+          ? "Catálogo | Elite Parts"
+          : "Elite Parts | Acessórios Automotivos";
+  }, [path]);
+  if (path.startsWith("/admin"))
+    return (
+      <Suspense fallback={<p role="status">Carregando administração…</p>}>
+        <AdminApp />
+      </Suspense>
+    );
+  return (
+    <CommerceProvider>
+      <RouteScroll route={route} />
+      {path === "/" ? (
+        <Hero />
+      ) : path === "/catalogo" ? (
+        <CatalogPage key={route} />
+      ) : path.startsWith("/produto/") ? (
+        <ProductPage key={path} slug={decodeSlug(path.slice(9))} />
+      ) : path === "/checkout" || path.startsWith("/checkout/") ? (
+        <CheckoutPage segment={path.split("/")[2] || "identificacao"} />
+      ) : path === "/creditos" ? (
+        <CreditsPage />
+      ) : (
+        <main className="shop-page shop-error">
+          <h1 data-page-title tabIndex={-1}>
+            Página não encontrada.
+          </h1>
+          <Link href="/catalogo" className="shop-primary">
+            Explorar catálogo
+          </Link>
+        </main>
+      )}
+      <CommerceOverlays />
+    </CommerceProvider>
+  );
+}
