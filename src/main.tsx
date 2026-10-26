@@ -11,3 +11,5 @@ createRoot(document.getElementById("root")!).render(<App />);
 
 import "./hero-phase1.css";
 import './work-c.css';
+import './design/tokens.css';
+import './design/spatial.css';

@@ -8,7 +8,7 @@ import { ProductImage } from "./ProductImage";
 import { Icon } from "./Icon";
 import type { CatalogProduct } from "../../services/catalog";
 export function ProductCard({ product: p }: { product: DemoProduct }) {
-  const { setQuickView } = useCommerce();
+  const { setQuickView, add } = useCommerce();
   const price = effectivePrice(p);
   return (
     <article className="shop-product-card" data-product-id={p.id}>
@@ -49,7 +49,7 @@ export function ProductCard({ product: p }: { product: DemoProduct }) {
           {(p as CatalogProduct).categoryLabel || categoryName(p.category)}
         </span>
         <Link href={`/produto/${p.slug}`}>
-          <h3>{p.name}</h3>
+          <h3 title={p.name}>{p.name}</h3>
         </Link>
         <p className="shop-card-price">
           {price === null ? "Preço sob consulta" : currency(price)}
@@ -65,13 +65,14 @@ export function ProductCard({ product: p }: { product: DemoProduct }) {
                   : "Opções sob consulta"}
           </span>
         </div>
-        <Link
-          href={`/produto/${p.slug}`}
+        <button
           className="shop-card-cta"
-          aria-label={`Ver produto: ${p.name}`}
+          disabled={(p as CatalogProduct).availability === 'indisponivel'}
+          onClick={() => add(p)}
+          aria-label={`Adicionar à lista: ${p.name}`}
         >
-          Ver produto <Icon name="arrow" />
-        </Link>
+          {(p as CatalogProduct).availability === 'indisponivel' ? 'Indisponível' : 'Adicionar à lista'} <Icon name="plus" />
+        </button>
       </div>
     </article>
   );

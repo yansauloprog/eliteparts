@@ -242,11 +242,11 @@ export function InterestPanel() {
           </p>
           <label className="c-checkbox">
             <input type="checkbox" required name="privacy" disabled={busy} />
-            Li o{" "}
+            <span>Li o{" "}
             <a href="/privacidade" target="_blank" rel="noopener noreferrer">
               aviso de privacidade
             </a>{" "}
-            e estou ciente do registro para atendimento.
+            e estou ciente do registro para atendimento.</span>
           </label>
           {error && <p role="alert">{error}</p>}
           <button className="shop-primary" disabled={busy || invalid}>
