@@ -256,6 +256,7 @@ export function Products() {
                     <td data-label="Ações">
                       <div className="a-row-actions">
                         <Link href={`/admin/produtos/${p.id}`}>Editar</Link>
+                        <details className="a-more-actions"><summary>Mais</summary><div>
                         <button
                           disabled={busy}
                           onClick={() => void action(p, "duplicate")}
@@ -274,6 +275,7 @@ export function Products() {
                         >
                           {p.is_active ? "Despublicar" : "Publicar"}
                         </button>
+                        </div></details>
                       </div>
                     </td>
                   </tr>
