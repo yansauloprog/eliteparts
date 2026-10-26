@@ -9,7 +9,7 @@ import {
 import { Field, Notice, useLoad, Loading, LoadError } from "./shared";
 import { Link, navigate, useRoute, routeURL } from "../lib/router";
 import { message } from "../lib/supabase";
-import { currency } from "../lib/catalog";
+import { currency } from "../lib/pricing";
 export function CrmDashboard() {
   const r = useLoad(crmDashboard);
   if (r.loading) return <Loading />;

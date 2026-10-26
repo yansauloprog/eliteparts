@@ -140,7 +140,7 @@ const storage = {
     uploads.push(path);
     return {
       error:
-        failUpload && path.includes("-480") ? new Error("upload failed") : null,
+        failUpload && path.endsWith("-480.webp") ? new Error("upload failed") : null,
     };
   },
   remove: async (paths) => {

@@ -24,6 +24,14 @@ function Selection({
     );
     return category ? (await catalog({ category: category.id })).rows : [];
   }, [query]);
+  if (r.error)
+    return (
+      <section className="shop-carousel">
+        <h2>{title}</h2>
+        <p role="alert">Não foi possível carregar esta seleção.</p>
+        <button onClick={r.reload}>Tentar novamente</button>
+      </section>
+    );
   return (
     <ProductCarousel
       title={title}

@@ -5,19 +5,21 @@ export function ProductImage({
   name,
   eager = false,
   className = "",
+  thumbnailOnly = false,
 }: {
   image?: CatalogImage;
   name: string;
   eager?: boolean;
   className?: string;
+  thumbnailOnly?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   return image && !failed ? (
     <img
       className={`${className} ${image.presentation === "context" ? "shop-photo-context" : ""}`.trim()}
-      src={image.src}
+      src={thumbnailOnly ? image.thumbnail || image.src : image.src}
       srcSet={
-        image.thumbnail
+        !thumbnailOnly && image.thumbnail
           ? `${image.thumbnail} ${image.thumbnailWidth}w, ${image.src} ${image.width}w`
           : undefined
       }

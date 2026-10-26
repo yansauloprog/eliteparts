@@ -8,8 +8,11 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/database.test.mjs && node tests/services.test.mjs && node tests/work-c.test.mjs",
+    "test": "node tests/database.test.mjs && node tests/services.test.mjs && node tests/work-c.test.mjs && node tests/work-d.test.mjs",
     "test:live": "node tests/live-api.mjs"
+  },
+  "overrides": {
+    "esbuild": "0.28.1"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.118.0",
@@ -22,9 +25,10 @@
     "@types/react": "19.2.0",
     "@types/react-dom": "19.2.0",
     "@vitejs/plugin-react": "5.2.0",
+    "esbuild": "0.28.1",
     "supabase": "2.122.0",
     "tailwindcss": "4.2.1",
     "typescript": "5.8.3",
-    "vite": "7.3.1"
+    "vite": "7.3.7"
   }
 }

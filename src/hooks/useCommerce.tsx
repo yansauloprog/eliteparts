@@ -5,11 +5,22 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import {
-  emptyCheckout,
-  type CheckoutDraft,
-  type DemoOrder,
-} from "../lib/checkout";
+import type { CheckoutDraft, DemoOrder } from "../lib/checkout";
+const emptyCheckout: CheckoutDraft = {
+  buyer: { name: "", email: "", phone: "", cpf: "" },
+  address: {
+    cep: "",
+    street: "",
+    number: "",
+    complement: "",
+    district: "",
+    city: "",
+    state: "",
+  },
+  delivery: "economica",
+  payment: "",
+  installments: "1",
+};
 import type { DemoProduct } from "../data/demo-catalog";
 import {
   clampQuantity,
@@ -27,7 +38,12 @@ function loadFavorites() {
     return Array.isArray(v)
       ? ([
           ...new Set(
-            v.filter((id: unknown) => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id)).slice(0,100),
+            v
+              .filter(
+                (id: unknown) =>
+                  typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id),
+              )
+              .slice(0, 100),
           ),
         ] as string[])
       : [];
@@ -84,17 +100,25 @@ function useValue() {
     quantity = 1,
     choice: CartChoice = emptyChoice,
   ) => {
+    if ("availability" in p && p.availability === "indisponivel") {
+      setToast("Este produto está indisponível.");
+      return;
+    }
+    if (cart.length >= 50 && !cart.some((l) => l.productId === p.id)) {
+      setToast("Sua lista pode conter até 50 produtos.");
+      return;
+    }
     const safe = {
       ...choice,
       installation: p.installation && choice.installation,
     };
     const key = lineKey(p.id, safe);
     setCart((prev) => {
-      const line = prev.find((l) => l.key === key);
-      if(!line && prev.length>=50) return prev;
+      const line = prev.find((l) => l.productId === p.id);
+      if (!line && prev.length >= 50) return prev;
       return line
         ? prev.map((l) =>
-            l.key === key
+            l.key === line.key
               ? {
                   ...l,
                   quantity:

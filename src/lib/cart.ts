@@ -31,7 +31,10 @@ export function decodeCart(raw: string | null): CartLine[] {
     if (value?.version !== 1 || !Array.isArray(value.items)) return [];
     const result: CartLine[] = [];
     for (const v of value.items.slice(0, 100)) {
-      const p = typeof v?.productId === 'string' && /^[0-9a-f-]{36}$/i.test(v.productId) ? {id:v.productId,installation:false,type:'produto'} : null;
+      const p =
+        typeof v?.productId === "string" && /^[0-9a-f-]{36}$/i.test(v.productId)
+          ? { id: v.productId, installation: false, type: "produto" }
+          : null;
       if (!p || typeof v.quantity !== "number") continue;
       const choice: CartChoice = {
         option: clean(v.option),
@@ -43,14 +46,15 @@ export function decodeCart(raw: string | null): CartLine[] {
         },
       };
       const key = lineKey(p.id, choice);
-      const existing = result.find((l) => l.key === key);
+      const existing = result.find((l) => l.productId === p.id);
       const quantity = p.type === "servico" ? 1 : clampQuantity(v.quantity);
       if (existing)
         existing.quantity =
           p.type === "servico"
             ? 1
             : clampQuantity(existing.quantity + quantity);
-      else result.push({ ...choice, key, productId: p.id, quantity });
+      else if (result.length < 50)
+        result.push({ ...choice, key, productId: p.id, quantity });
     }
     return result;
   } catch {

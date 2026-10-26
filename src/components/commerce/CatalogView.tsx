@@ -26,9 +26,11 @@ export function CatalogView({ home = false }: { home?: boolean }) {
       if (query !== (params.get("busca") || "")) set("busca", query);
     }, 350);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, route]);
   useEffect(() => setQuery(params.get("busca") || ""), [route]);
-  const page = Math.max(1, Number(params.get("pagina")) || 1);
+  const page = /^[1-9][0-9]{0,4}$/.test(params.get("pagina") || "")
+    ? Number(params.get("pagina"))
+    : 1;
   const result = useLoad(
     () =>
       catalog({

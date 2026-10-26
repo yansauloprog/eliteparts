@@ -3,9 +3,14 @@ import { useCommerce } from "../hooks/useCommerce";
 import { selectedProducts } from "../services/catalog";
 import { useLoad, Loading, LoadError } from "../admin/shared";
 import { db, message } from "../lib/supabase";
-import { normalizePhone, whatsappURL, type Receipt } from "../lib/interest";
+import {
+  normalizePhone,
+  whatsappURL,
+  requestIdentity,
+  type Receipt,
+} from "../lib/interest";
 import { Link } from "../lib/router";
-import { currency } from "../lib/catalog";
+import { currency } from "../lib/pricing";
 import { ProductImage } from "../components/commerce/ProductImage";
 import { CommerceHeader } from "../components/commerce/CommerceHeader";
 import { StoreFooter } from "../components/commerce/StoreSections";
@@ -16,7 +21,7 @@ export function InterestPanel() {
     [error, setError] = useState(""),
     [url, setURL] = useState(""),
     [receipt, setReceipt] = useState<Receipt | null>(null);
-  const key = useRef(crypto.randomUUID()),
+  const identity = useRef({ hash: "", key: "" }),
     lock = useRef(false);
   const r = useLoad(
     () => selectedProducts([...new Set(c.cart.map((x) => x.productId))]),
@@ -54,29 +59,13 @@ export function InterestPanel() {
         privacy: data.get("privacy") === "on",
         items: c.cart.map((l) => ({ id: l.productId, quantity: l.quantity })),
       };
-      const hash = Array.from(
-        new Uint8Array(
-          await crypto.subtle.digest(
-            "SHA-256",
-            new TextEncoder().encode(JSON.stringify(body)),
-          ),
-        ),
-      )
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+      let storage: Storage | null = null;
       try {
-        const previous = JSON.parse(
-          sessionStorage.getItem("elite.request") || "null",
-        );
-        if (previous?.hash === hash) key.current = previous.key;
-        else
-          sessionStorage.setItem(
-            "elite.request",
-            JSON.stringify({ hash, key: key.current }),
-          );
+        storage = sessionStorage;
       } catch {}
+      const key = await requestIdentity(body, identity.current, storage);
       const response = await db().functions.invoke("elite-lead-intake", {
-        body: { ...body, key: key.current },
+        body: { ...body, key },
       });
       if (response.error) {
         let detail = "Não foi possível registrar. Tente novamente.";
@@ -86,6 +75,10 @@ export function InterestPanel() {
         throw new Error(detail);
       }
       const saved = response.data as Receipt;
+      if (!saved || typeof saved.id !== "string" || !Array.isArray(saved.items))
+        throw new Error(
+          "Não foi possível confirmar o registro. Tente novamente.",
+        );
       setReceipt(saved);
       const target = whatsappURL(saved);
       setURL(target);
@@ -118,6 +111,19 @@ export function InterestPanel() {
           Seu interesse está registrado com a Elite Parts. Continue no WhatsApp
           para enviar a mensagem; o site não confirma esse envio.
         </p>
+        <button
+          onClick={() => {
+            try {
+              sessionStorage.removeItem("elite.request");
+            } catch {}
+            identity.current = { hash: "", key: "" };
+            setReceipt(null);
+            setURL("");
+            setError("");
+          }}
+        >
+          Iniciar nova solicitação
+        </button>
         {url ? (
           <a
             className="shop-primary"
@@ -141,6 +147,7 @@ export function InterestPanel() {
             <div>
               <ProductImage
                 image={p?.images[0]}
+                thumbnailOnly
                 name={p?.name || "Produto removido"}
               />
             </div>
@@ -223,6 +230,7 @@ export function InterestPanel() {
               type="tel"
               autoComplete="tel"
               maxLength={30}
+              inputMode="tel"
               placeholder="+55 (84) 99999-9999"
               disabled={busy}
             />

@@ -7,7 +7,7 @@ import { ProductGallery } from "../components/commerce/ProductGallery";
 import { StoreFooter } from "../components/commerce/StoreSections";
 import { ProductCarousel } from "../components/commerce/ProductCarousel";
 import { FavoriteButton } from "../components/commerce/FavoriteButton";
-import { currency } from "../lib/catalog";
+import { currency } from "../lib/pricing";
 export function ProductPage({ slug }: { slug: string }) {
   const c = useCommerce(),
     r = useLoad(async () => {

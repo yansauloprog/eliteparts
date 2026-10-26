@@ -14,6 +14,10 @@ const client = createClient(
 );
 const results = [];
 async function test(name, fn) {
+  if(!process.env.ELITE_ALLOW_WRITE_PROBES && /creation|update|upload/.test(name)){
+    results.push({name,status:'skipped',reason:'Requires explicit authorization for hosted write probes (ELITE_ALLOW_WRITE_PROBES=1).'});
+    console.log('SKIP',name,'— hosted write probe not enabled');return;
+  }
   await fn();
   results.push({ name, status: "passed" });
   console.log("PASS", name);
@@ -26,6 +30,10 @@ await test("Hosted public products query with publishable key", async () => {
   assert.ifError(r.error);
   assert.ok(Array.isArray(r.data));
   console.log("Visible products:", r.count);
+});
+await test('Hosted paginated catalog RPC',async()=>{
+ const r=await client.rpc('elite_catalog',{filters:{page:1}});assert.ifError(r.error);
+ assert.ok(Array.isArray(r.data.rows));assert.ok(r.data.rows.length<=24);
 });
 await test("Hosted anonymous product creation denied", async () => {
   const r = await client

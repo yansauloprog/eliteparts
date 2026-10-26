@@ -14,7 +14,9 @@ import {
 } from "./lib/router";
 import { useReveal } from "./hooks/useReveal";
 import { InterestPage, PrivacyPage } from "./pages/InterestPage";
-import { CreditsPage } from "./pages/CreditsPage";
+const CreditsPage = lazy(() =>
+  import("./pages/CreditsPage").then((m) => ({ default: m.CreditsPage })),
+);
 export function App() {
   const route = useRoute();
   useReveal(route);
@@ -38,15 +40,17 @@ export function App() {
       {path === "/" ? (
         <Hero />
       ) : path === "/catalogo" ? (
-        <CatalogPage key={route} />
+        <CatalogPage />
       ) : path.startsWith("/produto/") ? (
         <ProductPage key={path} slug={decodeSlug(path.slice(9))} />
       ) : path === "/checkout" || path.startsWith("/checkout/") ? (
         <InterestPage />
-      ) : path === '/privacidade' ? (
+      ) : path === "/privacidade" ? (
         <PrivacyPage />
       ) : path === "/creditos" ? (
-        <CreditsPage />
+        <Suspense fallback={<p role="status">Carregando créditos…</p>}>
+          <CreditsPage />
+        </Suspense>
       ) : (
         <main className="shop-page shop-error">
           <h1 data-page-title tabIndex={-1}>
