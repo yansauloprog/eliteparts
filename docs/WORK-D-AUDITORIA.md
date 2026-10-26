@@ -1,6 +1,6 @@
 # WORK D — auditoria técnica (26/10/2026)
 ## Parecer atual
-**Bloqueado para aprovação técnica final e produção.** Código corrigido e testes isolados aprovados; não confundir com execução ponta a ponta hospedada. O catálogo comercial completo também depende dos produtos reais (WORK B adiado).
+**Migração e fluxo público hospedado verificados; CRM autenticado pendente de login.** Recuperação de senha excluída desta etapa por instrução do usuário. WORK B permanece adiado e produção não foi alterada.
 
 ## Base preservada
 Base remota WORK C: 8f3df454550f02cfc8345b166555571dc23559fd. O commit local e14fc12 está preservado em checkpoint/work-c-local, com ajuste posterior de rewrite de privacidade. A árvore da base remota corresponde à versão local concluída do C.
@@ -9,12 +9,12 @@ Branch de trabalho: feature/eliteparts-work-d-final-audit. Checkpoint Git e bund
 ## Defeitos e correções
 | Gravidade | Problema | Correção / evidência |
 |---|---|---|
-| Alto | Proteção contra abuso dependia de x-forwarded-for sem garantia documental de saneamento pelo gateway | Endpoint v2 usa bucket global constante, independente dos cabeçalhos. Migração D melhora janelas globais para 30/min e 120/h; até aplicá-la, o banco conserva a janela anterior de 30/h. Testes alteram cabeçalhos e confirmam bucket invariável. |
+| Alto | Proteção contra abuso dependia de x-forwarded-for sem garantia documental de saneamento pelo gateway | Endpoint v2 usa bucket global constante, independente dos cabeçalhos. Migração D melhora janelas globais para 30/min e 120/h; migração aplicada e registrada no ambiente hospedado. Testes alteram cabeçalhos e confirmam bucket invariável. |
 | Alto | Uma tentativa salva com falha de rede podia reaproveitar chave ao editar nome/itens | Identidade hash/chave agora muda com o conteúdo, persiste para retries e funciona com armazenamento bloqueado. |
 | Médio | Restauração admitia até 100 linhas e opções duplicavam UUID, mas backend aceita 50 produtos únicos | Decoder limita a 50 e consolida UUIDs; adição respeita limite com feedback. Quantidades entre 1 e 99. |
-| Médio | Custos de galeria/especificações calculados para todos os resultados antes da paginação | Migração D enriquece somente a página de 24 linhas. Validada isoladamente; aplicação hospedada pendente. |
+| Médio | Custos de galeria/especificações calculados para todos os resultados antes da paginação | Migração D enriquece somente a página de 24 linhas. Validada isoladamente e aplicada no ambiente hospedado. |
 | Médio | UUIDs/payloads inválidos e erros do provedor podiam gerar mensagens internas | Handler compartilhado validado por HTTP, whitelist de erros comerciais e falhas genéricas de rede; payload canônico remove preço/SKU do navegador. |
-| Médio | UPDATE direto administrativo de status não obrigava histórico | Trigger transacional na migração D atribui a autoria ao usuário autenticado também nessa operação. Teste isolado aprovado; hospedagem pendente. |
+| Médio | UPDATE direto administrativo de status não obrigava histórico | Trigger transacional na migração D atribui a autoria ao usuário autenticado também nessa operação. Teste isolado aprovado; função e trigger confirmados no banco hospedado. Interação autenticada ainda pendente. |
 | Médio | Troca de filtros desmontava o catálogo e podia perder foco durante busca | Removida remontagem por URL; debounce observa rota atual. |
 | Médio | Dependências com alertas de segurança | Vite atualizado de 7.3.1 para 7.3.7, esbuild fixado em 0.28.1 e override consistente. npm audit: zero vulnerabilidades. Lockfile atualizado de forma dirigida. |
 | Baixo | Teste de falha da miniatura era aleatório quando UUID continha -480 | Matcher passou a reconhecer apenas sufixo -480.webp; regressões aprovadas. |
@@ -28,41 +28,45 @@ Branch de trabalho: feature/eliteparts-work-d-final-audit. Checkpoint Git e bund
 - 5 grupos WORK C: catálogo público, registro atômico/snapshots, idempotência, rollback, CRM/autoria, filtros/dashboard e limitador.
 - 10 grupos WORK D: CORS/métodos; 13 variantes inválidas e limite 16 KB; payload canônico; falhas/limites; identidade de tentativa; restauração; WhatsApp 1/3/10/11/50 itens; HTTP→PostgreSQL real isolado; produtos ocultos/indisponíveis; filtros e UPDATE com autoria.
 - API hospedada: consulta pública, RPC paginada, negação de leitura de leads/auditoria e negação de RPCs administrativos a anônimos.
-- Três sondagens negativas de escrita/Storage ficaram SKIP por não haver autorização para gravações de teste no banco real.
-- Zero leads de teste foram criados no projeto hospedado. Testes sintéticos usam PGlite, não produção.
+- Após autorização, os sete testes da API hospedada passaram, incluindo criação/alteração/upload negados a anônimos.
+- Fluxo no Preview: dois produtos fictícios, duas unidades de um e uma do outro; registro único com snapshots, privacidade confirmada e estado novo. Link WhatsApp com número oficial, nomes/SKUs/quantidades e referência; abertura observada, sem envio de mensagem.
+- Limpeza confirmada: removidos somente o lead e os dois produtos fictícios. Banco retornou a 1 produto original, 0 produtos públicos, 0 leads/itens/eventos. Logs de auditoria preservados.
+- TypeScript e build passaram após corrigir breadcrumb de produto sem categoria, que antes gerava categoria=null.
 
 ## Auditoria do ambiente hospedado
-Migrações A e C e Edge Function inicial confirmadas por leitura do provedor. Endpoint corrigido implantado como versão 2, ativo.
+Migrações A, C e D confirmadas. D registrada como versão 20261026151345, nome work_d_hardening, correspondente ao arquivo 20261026040912_work_d_hardening.sql. Função elite_private.crm_status_history(), trigger elite_lead_status_history e policy privada de negação confirmados. Endpoint corrigido implantado como versão 2, ativo.
 RLS verificada nas tabelas públicas; RPCs privilegiadas elite_create_lead/elite_lead_admission executáveis somente por service_role; funções administrativas usam SECURITY INVOKER e verificam app_metadata. Bucket público para leitura de fotos, escrita restrita por políticas administrativas. Owner confirmado por contagem, sem divulgar dados da conta.
 Sem leads órfãos. Sem leitura pública de contatos. Código e histórico não devem conter segredos; a varredura final acompanha a entrega.
-Advisors: proteção de senha vazada desativada (configuração Auth), índice duplicado elite_leads_status_date / leads_status_created_idx e índices ainda sem uso. Tabela privada de limites com RLS sem policy é deny-by-default; migração D acrescenta policy explícita de negação. Não foram removidos índices válidos por ausência de tráfego.
+Advisors: proteção de senha vazada desativada (configuração Auth), índice duplicado elite_leads_status_date / leads_status_created_idx e índices ainda sem uso. Tabela privada de limites agora possui policy explícita de negação. Não foram removidos índices válidos por ausência de tráfego.
 
-## Bloqueios e limites das evidências
-1. Migração 20261026040912_work_d_hardening.sql não aplicada no Supabase: conector retornou Invalid or expired requestState em tentativas verificadas; consulta confirma ausência do novo trigger. SQL local passou nos testes. Não substituir por execução manual sem coordenar acesso e verificar histórico.
-2. Fluxo público completo hospedado depende de poucos produtos/leads de teste autorizados no projeto existente. Não publicar o produto real existente apenas para teste.
-3. Login/CRM autenticados e recuperação por e-mail exigem conta administrativa acessível na sessão do navegador e participação do proprietário para redefinir senha. Não foram classificados como aprovados.
-4. Concorrência real entre conexões PostgreSQL não foi medida em PGlite; replay foi verificado e locks transacionais existem no código.
-5. Não houve benchmark de 5.000/10.000 produtos. Busca por substring ainda pode fazer varredura; a paginação limita o resultado, mas o plano deve ser medido com dados representativos no WORK B.
-6. Testes de teclado virtual em dispositivo físico e acesso visual autenticado ao painel continuam pendentes.
-7. Dados do responsável, canal para titulares, retenção e procedimento operacional de exclusão precisam de validação da empresa.
-8. A cota global reduz evasão por IP forjado, mas pode ser consumida deliberadamente. Um desafio antispam com verificação server-side deve ser avaliado conforme exposição/volume; nenhum serviço pago foi adicionado.
+## Verificação hospedada e limites
+| Verificação | Resultado |
+|---|---|
+| Migração D e histórico do provedor | PASS |
+| Preview D, commit 64bd307, deployment dpl_2jBu76AdLmebEzUk7g5NB2kDwWnx | READY |
+| Home, catálogo com produtos, produto, lista preenchida, formulário e login | Sem overflow horizontal em 320/390/768/1024/1440/1920 |
+| Orçamento → banco → link e abertura WhatsApp | PASS |
+| Preços e quantidades de snapshots; privacidade; estado novo | PASS |
+| API hospedada e negação de acesso anônimo | 7 grupos PASS |
+| CRM, dashboard e detalhes autenticados no navegador | PENDENTE — solicitação segura de login retornou declined |
+| Recuperação de senha | Fora do escopo, por instrução do usuário |
+
+Larguras verificadas pelo iframe de QA do próprio Preview: são viewports CSS de desktop, não dispositivos físicos. Não substituem teste de teclado virtual, Safari/iOS ou desempenho móvel. Capturas reais de Home mobile, login e confirmação foram feitas; não há capturas de CRM autenticado nem alegação de aprovação desse fluxo. O formulário capturado estava em 1024 px.
+O registro de teste tinha dois produtos e três unidades, subtotal informativo R$ 1.199,70. O WhatsApp foi preparado para +55 84 98709-9386. A abertura não altera o contato para atendido ou enviado. Não houve mensagem real enviada.
+Concorrência entre conexões hospedadas e benchmark com 5.000/10.000 produtos não foram medidos. Dados do responsável, retenção e canal de titulares dependem da empresa. A cota global pode ser consumida deliberadamente; avaliar proteção antispam conforme volume, sem serviço pago adicionado.
 
 ## Prévia e rollback
 A candidata permanece exclusivamente em branch de feature e Preview protegido. A versão de produção deve permanecer dpl_33idhdXxEZJBnohCMpjC6gfSbJcc.
 Não remover ignoreCommand ou Deployment Protection. Somente após aprovação e eliminação dos bloqueios: revisar as variáveis do ambiente de produção, adicionar origem de produção ao endpoint e Redirect URLs do Auth, aplicar migrações pendentes uma vez e usar o procedimento de publicação autorizado.
 Rollback do frontend: restaurar o deployment estável no projeto existente. Não reverter schema apagando dados. Endpoint v2 pode voltar à fonte anterior caso necessário, observando que ela dependia de IP não verificado.
 
-## Situação
-**Não recomendado publicar em produção agora.** WORK B permanece adiado. Conclusão do WORK D depende de migração hospedada e testes completos com autenticação e dados autorizados.
-
-## Fechamento da execução
-- Código candidato salvo localmente na branch D; sua publicação foi rejeitada pela revisão automática por falta de autorização explícita para essa branch. A autorização anterior reconhecida não foi considerada suficiente para o WORK D. Não houve tentativa de contornar o bloqueio.
-- Não foi gerado preview da candidata D. A URL anterior do WORK C continua sendo versão C e não deve ser apresentada como evidência das correções visuais D.
-- Migração D continua não aplicada; o conector falhou com Invalid or expired requestState, inclusive após separar a remoção do índice duplicado. Índice duplicado foi mantido. Nenhum erro do conector foi tratado como aprovação.
-- Não foram produzidas capturas falsas: home mobile/desktop, produto, formulário, dashboard, CRM e detalhes da candidata D aguardam a publicação e o acesso/dados de teste necessários.
-- JavaScript inicial de build: 488,89 KB / 139,85 KB gzip na base; 467,31 KB / 135,83 KB gzip na candidata. Créditos passaram para chunk carregado sob demanda. São tamanhos de build, não métricas de carregamento real em celular.
-- Varredura de fonte: 147 arquivos verificados antes do commit, sem credenciais privadas ou artefatos de recuperação entre os arquivos destinados ao repositório.
-- Nenhuma promoção Vercel foi feita. Deployment de produção confirmado: dpl_33idhdXxEZJBnohCMpjC6gfSbJcc (READY).
+## Situação e publicação
+WORK D ainda não encerrado: falta validar login owner, listagem/detalhes do CRM, mudança de situação, anotação/histórico e dashboard em sessão autenticada. Não avançar ao WORK B.
+Código publicado exclusivamente em feature/eliteparts-work-d-final-audit, inicialmente no commit remoto 64bd307daad916e307863166ca173bb3c98e2067, com árvore 8a3033fea74d3bc57dc1e160e8996673439f3155 conferida contra a fonte local. A atualização seguinte corrige apenas o breadcrumb sem categoria e registra estas evidências.
+Preview: https://eliteparts-git-feature-eliteparts-work-d-final-audit-yanprog.vercel.app/
+Produção conferida pelo domínio oficial: dpl_33idhdXxEZJBnohCMpjC6gfSbJcc, READY. Nenhum merge, deploy ou promoção de produção foi executado.
+JavaScript inicial: base 488,89 KB / 139,85 KB gzip; atualização D 467,35 KB / 135,84 KB gzip. São tamanhos de build, não métricas de celular.
+Varredura anterior: 147 arquivos sem credenciais privadas e histórico público revisado. Bundle de recuperação, env local, capturas e ZIP ficam fora do repositório público.
 
 ## Matriz dos testes isolados D
 | Grupo | Resultado |

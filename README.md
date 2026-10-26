@@ -20,18 +20,18 @@ O botão de orçamento exige nome, telefone internacional e ciência do aviso. O
 ## Backend e segurança
 `supabase/functions/elite-lead-intake` é uma função pública para visitantes, com validação de payload até 16 KB, IDs/quantidades, nomes/telefones, CORS explícito e respostas sanitizadas. Lê `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` somente no runtime do servidor. Nunca colocar essa chave em frontend, Git ou ZIP.
 Somente service_role pode executar `elite_create_lead` e `elite_lead_admission`. As funções administrativas exigem autorização por `app_metadata.eliteparts_role` (owner/admin), não user_metadata.
-O WORK D deixa de confiar em x-forwarded-for: a admissão usa um contador global persistente. Na migração D, há limite de 30 tentativas/minuto e 120/hora, mais controle transacional por telefone. Até a migração D ser aplicada, a função já implantada usa o contador anterior com um bucket global constante, limitando a 30 tentativas/hora. Origem não é autenticação. Um atacante ainda pode consumir a cota global; em maior exposição comercial, considerar desafio antispam validado no servidor.
+O WORK D deixa de confiar em x-forwarded-for: a admissão usa um contador global persistente. Na migração D, há limite de 30 tentativas/minuto e 120/hora, mais controle transacional por telefone. Origem não é autenticação. Um atacante ainda pode consumir a cota global; em maior exposição comercial, considerar desafio antispam validado no servidor.
 A idempotência utiliza UUID e fingerprint; o navegador mantém somente hash e chave da tentativa, sem nome/telefone em armazenamento. Dados editados geram nova chave. Falhas preservam a lista e oferecem nova tentativa.
 
 ## Administração e autenticação
 Rotas: `/admin/login`, `/admin`, `/admin/produtos`, `/admin/categorias`, `/admin/configuracoes`, `/admin/leads` e `/admin/leads/:id`.
-O CRM pagina 25 contatos, oferece filtros, snapshots, situação, anotações e histórico atribuído pelo banco. O dashboard agrega contagens reais. A migração D acrescenta histórico também para UPDATE direto de situação; até sua implantação essa melhoria existe apenas no código e nos testes isolados.
+O CRM pagina 25 contatos, oferece filtros, snapshots, situação, anotações e histórico atribuído pelo banco. O dashboard agrega contagens reais. A migração D aplicada acrescenta histórico também para UPDATE direto de situação.
 O primeiro owner deve existir no Auth, ter e-mail confirmado e receber app_metadata pelo procedimento privilegiado `scripts/grant-first-owner.sql`. Faça novo login após mudar permissões.
 Recuperação usa Supabase Auth e retorna a `/admin/redefinir-senha`. Configurar a origem exata do preview e a URL de recuperação nas Redirect URLs do provedor. Validação real por e-mail depende do proprietário; o assistente não define nem captura novas senhas.
 
 ## Banco de dados
 As migrações são incrementais, não devem recriar tabelas do ambiente existente. O fixture em tests/schema-fixture.sql é exclusivo de banco isolado.
-WORK A e C foram confirmados no ambiente hospedado. A migração D está validada isoladamente, mas sua aplicação hospedada ficou bloqueada pelo erro de sessão do conector; conferir relatório antes de aplicar. Não reaplicar versões existentes.
+WORK A, C e D foram confirmados no ambiente hospedado. D foi registrada como 20261026151345/work_d_hardening; corresponde ao arquivo 20261026040912_work_d_hardening.sql. Não reaplicar versões existentes.
 RLS protege produtos privados, dados de leads, eventos e auditoria. O índice duplicado de leads foi identificado, mas sua remoção ficou reservada para manutenção verificada. Índices ainda não utilizados não foram removidos por falta de tráfego representativo.
 
 ## Preview, produção e rollback
@@ -43,4 +43,4 @@ Rollback: no projeto existente, restaurar o deployment estável registrado no re
 
 ## Privacidade, limites e aceite
 Aviso em /privacidade, versão 2026-10-25, cobre registro para orçamento e atendimento relacionado, sem campanhas promocionais. Empresa deve definir responsável, contato para titulares, retenção e procedimento de exclusão/anonimização. Revisão técnica não aprova esses pontos operacionais/jurídicos.
-Consulte docs/WORK-D-AUDITORIA.md para problemas, testes e bloqueios. Fluxos públicos e administrativos completos hospedados e recuperação real por e-mail não estão aprovados sem execução com conta e dados autorizados. O catálogo comercial completo depende dos produtos reais e do futuro WORK B.
+Consulte docs/WORK-D-AUDITORIA.md para problemas, testes e bloqueios. Fluxo público hospedado de orçamento, snapshots e WhatsApp verificado com dados fictícios autorizados e removidos. CRM autenticado segue pendente de login; recuperação de senha foi excluída desta etapa pelo usuário. O catálogo comercial completo depende dos produtos reais e do futuro WORK B.

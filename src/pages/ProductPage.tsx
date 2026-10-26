@@ -40,10 +40,10 @@ export function ProductPage({ slug }: { slug: string }) {
       ) : (
         <>
           <nav className="shop-breadcrumb">
-            <Link href="/catalogo">Catálogo</Link> /{" "}
-            <Link href={`/catalogo?categoria=${p.category}`}>
-              {p.categoryLabel}
-            </Link>
+            <Link href="/catalogo">Catálogo</Link>
+            {p.category && (
+              <> / <Link href={`/catalogo?categoria=${p.category}`}>{p.categoryLabel}</Link></>
+            )}
           </nav>
           <div className="shop-product-detail">
             <ProductGallery product={p} />
