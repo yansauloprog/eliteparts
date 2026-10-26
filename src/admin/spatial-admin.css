@@ -141,6 +141,8 @@
 .a-login-intro h2 { color:#fff; font:700 clamp(50px,5.5vw,82px)/.95 var(--font-editorial); letter-spacing:-.02em; }
 .a-login-intro>span { display:flex; gap:10px; align-items:center; font-size:11px; color:#c1c2c8; }
 .a-login-box { width:min(100%,370px); justify-self:center; padding:40px 20px; }
+.a-login.a-access-denied { display:flex; justify-content:center; }
+.a-access-denied .official-logo { display:block; width:180px; margin:0 0 32px; padding:12px; border-radius:12px; background:var(--elite-black); }
 .a-login-box>.official-logo { display:none; }
 .a-login h1 { font:600 32px/1.2 var(--font-ui); color:var(--elite-text); letter-spacing:-.05em; text-align:left; }
 .a-login-box>p { text-align:left; color:var(--elite-muted); font-size:13px; }

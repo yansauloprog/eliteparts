@@ -120,7 +120,7 @@ export default function AdminApp() {
     return <Login onLogin={setUser} initialError={error} />;
   if (!isAdmin(user))
     return (
-      <div className="admin-root a-login">
+      <div className="admin-root a-login a-access-denied"><div className="a-login-box">
         <BrandLogo />
         <h1>Acesso negado</h1>
         <Notice
@@ -136,6 +136,7 @@ export default function AdminApp() {
           Voltar ao login
         </button>
         <Link href="/">Voltar ao site</Link>
+        </div>
       </div>
     );
   const title = path.includes("/produtos")
