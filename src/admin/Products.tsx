@@ -212,7 +212,7 @@ export function Products() {
               <tbody>
                 {result.data?.rows.map((p) => (
                   <tr key={p.id}>
-                    <td>
+                    <td data-label="Imagem">
                       {p.thumbnail ? (
                         <img
                           className="a-thumb"
@@ -223,18 +223,18 @@ export function Products() {
                         <span className="a-no-image">—</span>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Código">
                       <code>{p.sku}</code>
                     </td>
-                    <td>
+                    <td data-label="Produto">
                       <Link href={`/admin/produtos/${p.id}`}>{p.name}</Link>
                       {p.brand && <small>{p.brand}</small>}
                       {p.archived_at && (
                         <span className="a-badge">Arquivado</span>
                       )}
                     </td>
-                    <td>{p.category_name || "Sem categoria"}</td>
-                    <td>
+                    <td data-label="Categoria">{p.category_name || "Sem categoria"}</td>
+                    <td data-label="Preço">
                       {p.price === null
                         ? "Sob consulta"
                         : new Intl.NumberFormat("pt-BR", {
@@ -242,18 +242,18 @@ export function Products() {
                             currency: "BRL",
                           }).format(Number(p.price))}
                     </td>
-                    <td>{availabilityNames[p.availability]}</td>
-                    <td>
+                    <td data-label="Disponibilidade">{availabilityNames[p.availability]}</td>
+                    <td data-label="Publicação">
                       <span
                         className={`a-badge ${p.is_active ? "a-live" : ""}`}
                       >
                         {p.is_active ? "Publicado" : "Rascunho"}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Atualizado">
                       {new Date(p.updated_at).toLocaleDateString("pt-BR")}
                     </td>
-                    <td>
+                    <td data-label="Ações">
                       <div className="a-row-actions">
                         <Link href={`/admin/produtos/${p.id}`}>Editar</Link>
                         <button

@@ -9,6 +9,7 @@ import {
 } from "../services/productImages";
 import { useLoad, Notice, Loading, LoadError } from "./shared";
 import { message } from "../lib/supabase";
+import { Symbol } from "../components/ui/Symbol";
 export function ImageManager({ productId }: { productId: string }) {
   const result = useLoad(() => images(productId), [productId]),
     [busy, setBusy] = useState(false),
@@ -30,7 +31,7 @@ export function ImageManager({ productId }: { productId: string }) {
       result.reload();
     }
   }
-  async function files(fileList: FileList | null) {
+  async function files(fileList: FileList | null, targetImage: ProductImage | null = replacement ?? null) {
     if (!fileList?.length) return;
     const selected = Array.from(fileList);
     await operation(async () => {
@@ -41,10 +42,10 @@ export function ImageManager({ productId }: { productId: string }) {
         await uploadImage(
           productId,
           file,
-          replacement?.position ?? position++,
-          replacement,
+          targetImage?.position ?? position++,
+          targetImage ?? undefined,
         );
-        if (replacement) break;
+        if (targetImage) break;
       }
       const updated = await images(productId);
       if (updated.length && !updated.some((i) => i.is_cover))
@@ -99,6 +100,10 @@ export function ImageManager({ productId }: { productId: string }) {
         onChange={(e) => void files(e.target.files)}
       />
       <Notice error={error} success={success} />
+      <div className="a-upload-zone" onDragOver={(e) => e.preventDefault()} onDrop={(e) => {e.preventDefault(); if (!busy) void files(e.dataTransfer.files, null);}}>
+        <Symbol name="image"/><strong>Mais detalhes. Melhores escolhas.</strong><p>Arraste as fotografias para cá ou selecione os arquivos.</p>
+        <button disabled={busy} onClick={() => {setReplacement(undefined); if(input.current){input.current.multiple=true; input.current.click();}}}>Escolher arquivos</button>
+      </div>
       {busy && <p role="status">Processando e salvando imagens…</p>}
       {result.loading ? (
         <Loading />

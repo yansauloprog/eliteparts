@@ -10,43 +10,21 @@ import { Field, Notice, useLoad, Loading, LoadError } from "./shared";
 import { Link, navigate, useRoute, routeURL } from "../lib/router";
 import { message } from "../lib/supabase";
 import { currency } from "../lib/pricing";
+export const statusLabels: Record<string,string>={novo:"Novo",em_atendimento:"Em atendimento",orcamento_enviado:"Orçamento enviado",convertido:"Convertido",perdido:"Perdido"};
+export function StatusBadge({status}:{status:string}) { return <span className={"a-status a-status-"+status}>{statusLabels[status]||status}</span>; }
+export function CrmOverview({data}:{data:Awaited<ReturnType<typeof crmDashboard>>}) {
+ return <div className="a-crm-summary"><section className="a-panel"><div className="a-section-heading"><div><p className="a-kicker">RELACIONAMENTO</p><h2>Atendimento comercial</h2></div><span className="a-badge">{data.total} interessados</span></div>
+ {statuses.map(s=><div className="a-status-row" key={s}><span>{statusLabels[s]}</span><div className="a-status-track" aria-hidden="true"><span style={{width:(data.total?100*(data.statuses[s]||0)/data.total:0)+"%"}}/></div><strong>{data.statuses[s]||0}</strong></div>)}
+ <p className="a-stat-footer">Distribuição dos registros por situação. Solicitações não representam vendas.</p>
+ </section><section className="a-panel"><div className="a-section-heading"><h2>Últimas conversas</h2><Link href="/admin/leads">Abrir CRM ↗</Link></div>
+ {data.recent.length?<ul className="a-recent">{data.recent.map(x=><li key={x.id}><Link href={"/admin/leads/"+x.id}>{x.full_name}</Link><StatusBadge status={x.status}/></li>)}</ul>:<div className="a-empty"><h3>As próximas conversas começam aqui.</h3><p>Os pedidos de orçamento do catálogo aparecerão neste espaço.</p></div>}
+ </section></div>;
+}
 export function CrmDashboard() {
-  const r = useLoad(crmDashboard);
-  if (r.loading) return <Loading />;
-  if (r.error) return <LoadError error={r.error} retry={r.reload} />;
-  return (
-    <section className="a-panel">
-      <h2>Atendimento comercial</h2>
-      <div className="a-stats">
-        {[
-          ["total", "Total de interessados"],
-          ["novo", "Novos"],
-          ["em_atendimento", "Em atendimento"],
-          ["orcamento_enviado", "Orçamentos enviados"],
-          ["convertido", "Convertidos"],
-        ].map(([s, label]) => (
-          <div key={s}>
-            <strong>
-              {s === "total" ? r.data?.total : r.data?.statuses[s] || 0}
-            </strong>
-            <span>{label}</span>
-          </div>
-        ))}
-      </div>
-      <h3>Contatos recentes</h3>
-      {r.data?.recent.length ? (
-        r.data.recent.map((x) => (
-          <p key={x.id}>
-            <Link href={"/admin/leads/" + x.id}>{x.full_name}</Link> ·{" "}
-            {x.status}
-          </p>
-        ))
-      ) : (
-        <p>Nenhuma solicitação registrada.</p>
-      )}
-      <Link href="/admin/leads">Abrir CRM →</Link>
-    </section>
-  );
+ const r=useLoad(crmDashboard);
+ if(r.loading)return <Loading/>;
+ if(r.error)return <LoadError error={r.error} retry={r.reload}/>;
+ return <CrmOverview data={r.data!}/>;
 }
 export function Leads() {
   const route = useRoute(),
@@ -93,7 +71,7 @@ export function Leads() {
           >
             <option value="">Todas</option>
             {statuses.map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s} value={s}>{statusLabels[s]}</option>
             ))}
           </select>
         </Field>
@@ -139,12 +117,12 @@ export function Leads() {
               <tbody>
                 {r.data?.rows.map((x) => (
                   <tr key={x.id}>
-                    <td>{x.full_name}</td>
-                    <td>{x.phone}</td>
-                    <td>{x.lead_items?.length || 0}</td>
-                    <td>{new Date(x.created_at).toLocaleString("pt-BR")}</td>
-                    <td>{x.status}</td>
-                    <td>{x.source}</td>
+                    <td data-label="Cliente">{x.full_name}</td>
+                    <td data-label="WhatsApp">{x.phone}</td>
+                    <td data-label="Produtos">{x.lead_items?.length || 0}</td>
+                    <td data-label="Data">{new Date(x.created_at).toLocaleString("pt-BR")}</td>
+                    <td data-label="Situação"><StatusBadge status={x.status}/></td>
+                    <td data-label="Origem">{x.source}</td>
                     <td>
                       <Link href={"/admin/leads/" + x.id}>Detalhes</Link>
                     </td>
@@ -247,7 +225,7 @@ export function LeadDetail({ id }: { id: string }) {
         <Field label="Situação">
           <select name="status" defaultValue={d.lead.status}>
             {statuses.map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s} value={s}>{statusLabels[s]}</option>
             ))}
           </select>
         </Field>

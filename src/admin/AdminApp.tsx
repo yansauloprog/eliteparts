@@ -18,7 +18,9 @@ import { Categories } from "./Categories";
 import { Settings } from "./Settings";
 import {Leads,LeadDetail} from './Leads';
 import { Field, Loading, Notice } from "./shared";
+import { Symbol } from "../components/ui/Symbol";
 import "./admin.css";
+import "./spatial-admin.css";
 export default function AdminApp() {
   const path = routeURL(useRoute()).pathname;
   const [user, setUser] = useState<User | null>(null),
@@ -142,7 +144,7 @@ export default function AdminApp() {
       ? "Categorias"
       : path.includes("/configuracoes")
         ? "Configurações"
-        : "Visão geral";
+        : path.includes("/leads") ? "Interessados / CRM" : "Visão geral";
   async function logout() {
     try {
       await signOut();
@@ -169,18 +171,19 @@ export default function AdminApp() {
         aria-modal={drawer || undefined}
       >
         <BrandLogo />
+        <p className="a-sidebar-caption">CATÁLOGO & ATENDIMENTO</p>
         <button className="a-drawer-close" onClick={() => setDrawer(false)}>
           Fechar menu ×
         </button>
         <span className="a-kicker">ADMINISTRAÇÃO</span>
         <nav>
-          {[
-            ["/admin", "Visão geral"],
-            ["/admin/produtos", "Produtos"],
-            ["/admin/categorias", "Categorias"],
-            ["/admin/leads", "Interessados"],
-            ["/admin/configuracoes", "Configurações"],
-          ].map(([href, label]) => (
+          {([
+            ["/admin", "Visão geral", "grid"],
+            ["/admin/produtos", "Produtos", "box"],
+            ["/admin/categorias", "Categorias", "layers"],
+            ["/admin/leads", "Interessados", "people"],
+            ["/admin/configuracoes", "Configurações", "settings"],
+          ] as const).map(([href, label, icon]) => (
             <Link
               key={href}
               href={href}
@@ -190,16 +193,17 @@ export default function AdminApp() {
                   : undefined
               }
             >
-              {label}
+              <Symbol name={icon} /><span>{label}</span><Symbol name="arrow" />
             </Link>
           ))}
         </nav>
         <div className="a-sidebar-bottom">
-          <Link href="/">↗ Ver site</Link>
-          <button onClick={() => void logout()}>Sair da conta</button>
+          <Link href="/"><Symbol name="external" /> Ver site</Link>
+          <div className="a-identity"><span className="a-avatar" aria-hidden="true">{user?.email?.slice(0,1).toUpperCase()}</span><div><strong>{user?.app_metadata?.eliteparts_role === 'owner' ? 'Proprietário' : 'Administrador'}</strong><small>{user?.email}</small></div></div>
+          <button onClick={() => void logout()}><Symbol name="logout" /> Sair da conta</button>
         </div>
       </aside>
-      <div className="a-workspace">
+      <div className="a-workspace" inert={drawer || undefined}>
         <header className="a-header">
           <button
             ref={menu}
@@ -208,10 +212,10 @@ export default function AdminApp() {
             aria-label="Abrir menu"
             onClick={() => setDrawer(true)}
           >
-            ☰
+            <Symbol name="menu" />
           </button>
-          <strong>{title}</strong>
-          <span title={user?.email}>{user?.email}</span>
+          <div className="a-header-breadcrumb"><small>Workspace / Administração</small><strong>{title}</strong></div>
+          <Link className="a-header-site" href="/catalogo">Ver catálogo <Symbol name="external" /></Link>
         </header>
         <main className="a-main">
           <Notice error={error} />
@@ -288,6 +292,11 @@ function Login({
   }
   return (
     <div className="admin-root a-login">
+      <aside className="a-login-intro" aria-label="Elite Parts administração">
+        <BrandLogo />
+        <div><p className="a-kicker">ELITE PARTS / WORKSPACE</p><h2>Precisão em<br/>cada detalhe.</h2><p>Seu catálogo e seus atendimentos.<br/>Tudo no mesmo lugar.</p></div>
+        <span><Symbol name="shield" /> Área exclusiva da equipe</span>
+      </aside>
       <div className="a-login-box">
         <BrandLogo />
         <p className="a-kicker">PAINEL ADMINISTRATIVO</p>
