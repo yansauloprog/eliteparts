@@ -155,7 +155,7 @@ body { background:var(--elite-offwhite); }
 .c-interest input { min-height:44px; border:1px solid #c4c5c0; border-radius:var(--radius-sm); font:400 14px var(--font-ui); color:var(--elite-text); }
 .c-interest-item input { width:64px; padding:10px; }
 .c-interest-item button { font-size:11px; min-height:44px; color:var(--elite-muted); }
-.c-lead-form { background:var(--elite-offwhite); padding:24px; border-radius:var(--radius-lg); border:1px solid var(--elite-border); gap:16px; }
+.c-lead-form { background:var(--elite-offwhite); padding:24px; border-radius:var(--radius-lg); border:1px solid var(--elite-border); gap:16px; width:100%; max-width:520px; margin-inline:auto; }
 .c-lead-form label { font-size:12px; }
 .c-lead-form>p { color:var(--elite-muted); font-size:11px; }
 .c-lead-form .c-checkbox { display:grid; grid-template-columns:20px 1fr; gap:10px; font-size:11px; }
